@@ -4,7 +4,7 @@
 from _collections import deque
 from collections import defaultdict
 from functools import total_ordering
-from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable
+from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable, List
 
 from interegular.utils import soft_repr
 
@@ -69,7 +69,7 @@ TransitionKey = NewType("TransitionKey", int)
 
 class Alphabet(Mapping[Any, TransitionKey]):
     @property
-    def by_transition(self):
+    def by_transition(self) -> Dict[TransitionKey, List[Union[str, _AnythingElseCls]]]:
         return self._by_transition
 
     def __str__(self):
@@ -95,7 +95,7 @@ class Alphabet(Mapping[Any, TransitionKey]):
         by_transition = defaultdict(list)
         for s, t in self._symbol_mapping.items():
             by_transition[t].append(s)
-        self._by_transition = dict(by_transition)
+        self._by_transition: Dict[TransitionKey, List[Union[str, _AnythingElseCls]]] = dict(by_transition)
 
     def __getitem__(self, item):
         if item not in self._symbol_mapping:
@@ -966,7 +966,7 @@ def crawl_hash_no_result(alphabet, initial, final, follow):
                     unvisited.add(new)
 
 
-def crawl(alphabet: Alphabet, initial: any, final: Callable[[any], bool], follow: Callable[[any, any], any]):
+def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow: Callable[[Any, Any], Set[Any]]):
     """
         Given the above conditions and instructions, crawl a new unknown FSM,
         mapping its states, final states and transitions. Return the new FSM.
@@ -982,7 +982,7 @@ def crawl(alphabet: Alphabet, initial: any, final: Callable[[any], bool], follow
         return hash(obj)
 
     states = [initial]
-    state_idx = {get_hash(initial): 0}
+    state_idx: Dict[int, int] = {get_hash(initial): 0}
     finals = set()
     transition_map = {}
 
