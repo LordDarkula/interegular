@@ -4,7 +4,7 @@
 from _collections import deque
 from collections import defaultdict
 from functools import total_ordering
-from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable
+from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable
 
 from interegular.utils import soft_repr
 
@@ -350,14 +350,14 @@ class FSM:
                 next FSM if we reach the end of the current one
                 TODO: improve all follow() implementations to allow for dead metastates?
             """
-            next = set()
+            next_set = set()
             for (i, substate) in current:
                 fsm = fsms[i]
                 if substate in fsm.map and new_to_old[i][new_transition] in fsm.map[substate]:
-                    next.update(connect_all(i, fsm.map[substate][new_to_old[i][new_transition]]))
-            if not next:
+                    next_set.update(connect_all(i, fsm.map[substate][new_to_old[i][new_transition]]))
+            if not next_set:
                 raise OblivionError
-            return frozenset(next)
+            return frozenset(next_set)
 
         return crawl(alphabet, initial, final, follow)
 
@@ -966,7 +966,7 @@ def crawl_hash_no_result(alphabet, initial, final, follow):
                     unvisited.add(new)
 
 
-def crawl(alphabet, initial, final, follow):
+def crawl(alphabet: Alphabet, initial: any, final: Callable[[any], bool], follow: Callable[[any, any], any]):
     """
         Given the above conditions and instructions, crawl a new unknown FSM,
         mapping its states, final states and transitions. Return the new FSM.
@@ -1000,18 +1000,20 @@ def crawl(alphabet, initial, final, follow):
         for transition in alphabet.by_transition:
             try:
                 next_state = follow(state, transition)
-                next_hash = get_hash(next_state)
+                
             except OblivionError:
                 # Reached an oblivion state. Don't list it.
                 continue
+            
             else:
-                try:
+                next_hash = get_hash(next_state)
+                if next_hash in state_idx:
                     j = state_idx[next_hash]
-                except KeyError:
+                else:
                     j = len(states)
                     states.append(next_state)
-                    if next_hash not in state_idx:
-                        state_idx[next_hash] = j
+                    state_idx[next_hash] = j
+                    
                 transition_map[i][transition] = j
 
         i += 1
