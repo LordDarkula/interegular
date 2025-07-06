@@ -974,9 +974,17 @@ def crawl(alphabet, initial, final, follow):
         forever if you supply an evil version of follow().
     """
 
+    def get_hash(obj):
+        if isinstance(obj, set):
+            return hash(frozenset(obj))
+        elif isinstance(obj, dict):
+            return hash(tuple(sorted(obj.items())))
+        return hash(obj)
+
     states = [initial]
+    state_idx = {get_hash(initial): 0}
     finals = set()
-    map = {}
+    transition_map = {}
 
     # iterate over a growing list
     i = 0
@@ -988,20 +996,23 @@ def crawl(alphabet, initial, final, follow):
             finals.add(i)
 
         # compute map for this state
-        map[i] = {}
+        transition_map[i] = {}
         for transition in alphabet.by_transition:
             try:
-                next = follow(state, transition)
+                next_state = follow(state, transition)
+                next_hash = get_hash(next_state)
             except OblivionError:
                 # Reached an oblivion state. Don't list it.
                 continue
             else:
                 try:
-                    j = states.index(next)
-                except ValueError:
+                    j = state_idx[next_hash]
+                except KeyError:
                     j = len(states)
-                    states.append(next)
-                map[i][transition] = j
+                    states.append(next_state)
+                    if next_hash not in state_idx:
+                        state_idx[next_hash] = j
+                transition_map[i][transition] = j
 
         i += 1
 
@@ -1010,6 +1021,6 @@ def crawl(alphabet, initial, final, follow):
         states=range(len(states)),
         initial=0,
         finals=finals,
-        map=map,
+        map=transition_map,
         __no_validation__=True,
     )
