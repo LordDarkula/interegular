@@ -332,10 +332,9 @@ class FSM:
         # Use a superset containing states from all FSMs at once.
         # We start at the start of the first FSM. If this state is final in the
         # first FSM, then we are also at the start of the second FSM. And so on.
-        initial = set()
+        initial = frozenset()
         if len(fsms) > 0:
-            initial.update(connect_all(0, fsms[0].initial))
-        initial = frozenset(initial)
+            initial = frozenset(connect_all(0, fsms[0].initial))
 
         def final(state):
             """If you're in a final state of the final FSM, it's final"""
