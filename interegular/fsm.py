@@ -5,6 +5,7 @@ from _collections import deque
 from collections import defaultdict
 from functools import total_ordering
 from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable, List
+from itertools import chain
 
 from interegular.utils import soft_repr
 
@@ -578,12 +579,17 @@ class FSM:
         # Find every possible way to reach the current state-set
         # using this symbol.
         def follow(current, transition):
-            next_states = set()
-            for state in current:
-                next_states.update(reverse_map.get((state, transition), set()))
+            _empty_set = set()  # reuse to avoid unnecessary allocations
+
+            next_states_iter = (
+                reverse_map.get((state, transition), _empty_set)
+                for state in current
+            )
+            next_states = frozenset(chain.from_iterable(next_states_iter))
+
             if not next_states:
                 raise OblivionError
-            return frozenset(next_states)
+            return next_states
 
         # A state-set is final if the initial state is in it.
         def final(state):
