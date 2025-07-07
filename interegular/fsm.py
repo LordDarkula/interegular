@@ -322,19 +322,19 @@ class FSM:
                 (if it's final) the first state from the next FSM, plus (if that's
                 final) the first state from the next but one FSM, plus...
             """
-            result = {(i, substate)}
+            result = [(i, substate)]
             while i < last_index and substate in fsms[i].finals:
                 i += 1
                 substate = fsms[i].initial
-                result.add((i, substate))
-            return result
+                result.append((i, substate))
+            return frozenset(result)
 
         # Use a superset containing states from all FSMs at once.
         # We start at the start of the first FSM. If this state is final in the
         # first FSM, then we are also at the start of the second FSM. And so on.
         initial = frozenset()
         if len(fsms) > 0:
-            initial = frozenset(connect_all(0, fsms[0].initial))
+            initial = connect_all(0, fsms[0].initial)
 
         def final(state):
             """If you're in a final state of the final FSM, it's final"""
@@ -349,14 +349,15 @@ class FSM:
                 next FSM if we reach the end of the current one
                 TODO: improve all follow() implementations to allow for dead metastates?
             """
-            next = set()
+            next_states = set()
             for (i, substate) in current:
                 fsm = fsms[i]
-                if substate in fsm.map and new_to_old[i][new_transition] in fsm.map[substate]:
-                    next.update(connect_all(i, fsm.map[substate][new_to_old[i][new_transition]]))
-            if not next:
+                current_vertex: TransitionKey = new_to_old[i][new_transition]
+                if substate in fsm.map and current_vertex in fsm.map[substate]:
+                    next_states.update(connect_all(i, fsm.map[substate][current_vertex]))
+            if not next_states:
                 raise OblivionError
-            return frozenset(next)
+            return frozenset(next_states)
 
         return crawl(alphabet, initial, final, follow)
 
