@@ -382,22 +382,22 @@ class FSM:
         initial = {self.initial}
 
         def follow(state, transition):
-            next = set()
+            next_states = []
             for substate in state:
                 if substate in self.map and transition in self.map[substate]:
-                    next.add(self.map[substate][transition])
+                    next_states.append(self.map[substate][transition])
 
                 # If one of our substates is final, then we can also consider
                 # transitions from the initial state of the original FSM.
                 if substate in self.finals \
                         and self.initial in self.map \
                         and transition in self.map[self.initial]:
-                    next.add(self.map[self.initial][transition])
+                    next_states.append(self.map[self.initial][transition])
 
-            if not next:
+            if not next_states:
                 raise OblivionError
 
-            return frozenset(next)
+            return frozenset(next_states)
 
         def final(state):
             return any(substate in self.finals for substate in state)
