@@ -350,14 +350,14 @@ class FSM:
                 next FSM if we reach the end of the current one
                 TODO: improve all follow() implementations to allow for dead metastates?
             """
-            next_set = set()
+            next = set()
             for (i, substate) in current:
                 fsm = fsms[i]
                 if substate in fsm.map and new_to_old[i][new_transition] in fsm.map[substate]:
-                    next_set.update(connect_all(i, fsm.map[substate][new_to_old[i][new_transition]]))
-            if not next_set:
+                    next.update(connect_all(i, fsm.map[substate][new_to_old[i][new_transition]]))
+            if not next:
                 raise OblivionError
-            return frozenset(next_set)
+            return frozenset(next)
 
         return crawl(alphabet, initial, final, follow)
 
@@ -966,7 +966,7 @@ def crawl_hash_no_result(alphabet, initial, final, follow):
                     unvisited.add(new)
 
 
-def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow: Callable[[Any, Any], Set[Any]]):
+def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow: Callable[[Any, TransitionKey], Any]):
     """
         Given the above conditions and instructions, crawl a new unknown FSM,
         mapping its states, final states and transitions. Return the new FSM.
