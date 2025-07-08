@@ -350,15 +350,15 @@ class FSM:
                 next FSM if we reach the end of the current one
                 TODO: improve all follow() implementations to allow for dead metastates?
             """
-            next_states = set()
+            next_states = []
             for (i, substate) in current:
                 fsm = fsms[i]
                 current_vertex: TransitionKey = new_to_old[i][new_transition]
                 if substate in fsm.map and current_vertex in fsm.map[substate]:
-                    next_states.update(connect_all(i, fsm.map[substate][current_vertex]))
+                    next_states.append(connect_all(i, fsm.map[substate][current_vertex]))
             if not next_states:
                 raise OblivionError
-            return frozenset(next_states)
+            return frozenset(chain.from_iterable(next_states))
 
         return crawl(alphabet, initial, final, follow)
 
