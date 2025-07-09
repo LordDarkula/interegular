@@ -120,11 +120,11 @@ class Alphabet(Mapping[Any, TransitionKey]):
         result = Alphabet({symbol: keys_to_key[keys]
                            for keys, symbols in keys_to_symbols.items()
                            for symbol in symbols})
-        new_to_old_mappings = [{} for _ in alphabets]
+        new_to_old_mappings = tuple({} for _ in alphabets)
         for keys, new_key in keys_to_key.items():
             for old_key, new_to_old in zip(keys, new_to_old_mappings):
                 new_to_old[new_key] = old_key
-        return result, tuple(new_to_old_mappings)
+        return result, new_to_old_mappings
 
     @classmethod
     def from_groups(cls, *groups):
@@ -140,13 +140,13 @@ class Alphabet(Mapping[Any, TransitionKey]):
         result = Alphabet({symbol: keys_to_key[keys]
                            for keys, symbols in keys_to_symbols.items()
                            for symbol in symbols})
-        old_to_new_mappings = [defaultdict(list) for _ in (self, other)]
-        new_to_old_mappings = [{} for _ in (self, other)]
+        old_to_new_mappings = defaultdict(list), defaultdict(list)
+        new_to_old_mappings = {}, {}
         for keys, new_key in keys_to_key.items():
             for old_key, old_to_new, new_to_old in zip(keys, old_to_new_mappings, new_to_old_mappings):
                 old_to_new[old_key].append(new_key)
                 new_to_old[new_key] = old_key
-        return result, tuple(new_to_old_mappings)
+        return result, new_to_old_mappings
 
     def copy(self):
         return Alphabet(self._symbol_mapping.copy())
