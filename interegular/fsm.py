@@ -569,11 +569,9 @@ class FSM:
         initial = frozenset(self.finals)
 
         # Speed up follow by pre-computing reverse-transition map
-        reverse_map = {}
+        reverse_map = defaultdict(set)
         for state, transition_map in self.map.items():
             for transition, next_state in transition_map.items():
-                if (next_state, transition) not in reverse_map:
-                    reverse_map[(next_state, transition)] = set()
                 reverse_map[(next_state, transition)].add(state)
 
         # Find every possible way to reach the current state-set
