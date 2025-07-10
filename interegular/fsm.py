@@ -218,7 +218,7 @@ class FSM:
         self.__dict__["finals"] = frozenset(finals)
         self.__dict__["map"] = map
 
-    def accepts(self, input: str):
+    def accepts(self, input_str: str):
         """
             Test whether the present FSM accepts the supplied string (iterable of
             symbols). Equivalently, consider `self` as a possibly-infinite set of
@@ -228,13 +228,19 @@ class FSM:
             alphabet will be converted to `fsm.anything_else`.
         """
         state = self.initial
-        for symbol in input:
-            if anything_else in self.alphabet and not symbol in self.alphabet:
+        anything_else_in_alphabet = anything_else in self.alphabet
+        
+        for symbol in input_str:
+            if anything_else_in_alphabet and not symbol in self.alphabet:
                 symbol = anything_else
+                
+            if state not in self.map:
+                return False
+            
             transition = self.alphabet[symbol]
 
             # Missing transition = transition to dead state
-            if not (state in self.map and transition in self.map[state]):
+            if transition not in self.map[state]:
                 return False
 
             state = self.map[state][transition]
