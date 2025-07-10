@@ -407,7 +407,7 @@ class FSM:
         base.__dict__['finals'] = base.finals | {base.initial}
         return base
 
-    def times(self, multiplier):
+    def times(self, multiplier: int):
         """
             Given an FSM and a multiplier, return the multiplied FSM.
         """
@@ -428,18 +428,19 @@ class FSM:
             return False
 
         def follow(current, transition):
-            next = []
+            next_state = []
             for (substate, iteration) in current:
                 if iteration < multiplier \
                         and substate in self.map \
                         and transition in self.map[substate]:
-                    next.append((self.map[substate][transition], iteration))
+                    current_state = self.map[substate][transition]
+                    next_state.append((current_state, iteration))
                     # final of self? merge with initial on next iteration
-                    if self.map[substate][transition] in self.finals:
-                        next.append((self.initial, iteration + 1))
-            if len(next) == 0:
+                    if current_state in self.finals:
+                        next_state.append((self.initial, iteration + 1))
+            if len(next_state) == 0:
                 raise OblivionError
-            return frozenset(next)
+            return frozenset(next_state)
 
         return crawl(alphabet, initial, final, follow)
 
