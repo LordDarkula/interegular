@@ -652,7 +652,7 @@ class FSM:
         # Many FSMs have "dead states". Once you reach a dead state, you can no
         # longer reach a final state. Since many strings may end up here, it's
         # advantageous to constrain our search to live states only.
-        livestates = set(state for state in self.states if self.islive(state))
+        livestates = frozenset(state for state in self.states if self.islive(state))
 
         # We store a list of tuples. Each tuple consists of an input string and the
         # state that this input string leads to. This means we don't have to run the
