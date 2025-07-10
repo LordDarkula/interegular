@@ -948,7 +948,7 @@ def parallel(fsms, test):
 
 
 def crawl_hash_no_result(alphabet, initial, final, follow):
-    unvisited = {initial}
+    unvisited = [initial]
     visited = set()
 
     while unvisited:
@@ -967,7 +967,7 @@ def crawl_hash_no_result(alphabet, initial, final, follow):
                 continue
             else:
                 if new not in visited:
-                    unvisited.add(new)
+                    unvisited.append(new)
 
 
 def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow: Callable[[Any, TransitionKey], Any]):
