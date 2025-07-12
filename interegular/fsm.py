@@ -1016,6 +1016,8 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
         elif isinstance(obj, dict):
             return hash(tuple(sorted(obj.items())))
         return hash(obj)
+    
+    transitions_in_alphabet = alphabet.by_transition.keys()
 
     states = [initial]
     state_idx: Dict[int, int] = {get_hash(initial): 0}
@@ -1033,7 +1035,7 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
 
         # compute map for this state
         transition_map[i] = {}
-        for transition in alphabet.by_transition:
+        for transition in transitions_in_alphabet:
             try:
                 next_state = follow(state, transition)
                 
