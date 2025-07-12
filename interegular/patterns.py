@@ -162,7 +162,7 @@ class _CharGroup(_Repeatable):
             states={0, 1},
             initial=0,
             finals={1},
-            map=mapping,
+            transition_map=mapping,
         )
 
     def simplify(self) -> '_CharGroup':
@@ -193,7 +193,7 @@ class __DotCls(_Repeatable):
             states={0, 1},
             initial=0,
             finals={1},
-            map={0: {alphabet[sym]: 1 for sym in symbols}},
+            transition_map={0: {alphabet[sym]: 1 for sym in symbols}},
         )
 
     def _get_alphabet(self, flags: REFlags) -> Alphabet:

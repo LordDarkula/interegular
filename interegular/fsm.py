@@ -181,13 +181,13 @@ class FSM:
     initial: State
     states: Set[State]
     finals: Set[State]
-    map: Dict[State, Dict[TransitionKey, State]]
+    transition_map: Dict[State, Dict[TransitionKey, State]]
 
     def __setattr__(self, name, value):
         """Immutability prevents some potential problems."""
         raise Exception("This object is immutable.")
 
-    def __init__(self, alphabet: Alphabet, states, initial, finals, map, *, __no_validation__=False):
+    def __init__(self, alphabet: Alphabet, states, initial, finals, transition_map, *, __no_validation__=False):
         """
             `alphabet` is an iterable of symbols the FSM can be fed.
             `states` is the set of states for the FSM
@@ -205,19 +205,19 @@ class FSM:
                 raise Exception("Initial state " + repr(initial) + " must be one of " + repr(states))
             if not finals.issubset(states):
                 raise Exception("Final states " + repr(finals) + " must be a subset of " + repr(states))
-            for state in map.keys():
-                for symbol in map[state]:
-                    if not map[state][symbol] in states:
+            for state in transition_map.keys():
+                for symbol in transition_map[state]:
+                    if not transition_map[state][symbol] in states:
                         raise Exception(
                             "Transition for state " + repr(state) + " and symbol " + repr(symbol) + " leads to " + repr(
-                                map[state][symbol]) + ", which is not a state")
+                                transition_map[state][symbol]) + ", which is not a state")
 
         # Initialise the hard way due to immutability.
         self.__dict__["alphabet"] = alphabet
         self.__dict__["states"] = frozenset(states)
         self.__dict__["initial"] = initial
         self.__dict__["finals"] = frozenset(finals)
-        self.__dict__["map"] = map
+        self.__dict__["transition_map"] = transition_map
 
     def accepts(self, input_str: str) -> bool:
         """
@@ -235,28 +235,28 @@ class FSM:
                 if not symbol in self.alphabet:
                     symbol = anything_else
                     
-                if state not in self.map:
+                if state not in self.transition_map:
                     return False
                 
                 transition = self.alphabet[symbol]
 
                 # Missing transition = transition to dead state
-                if transition not in self.map[state]:
+                if transition not in self.transition_map[state]:
                     return False
 
-                state = self.map[state][transition]
+                state = self.transition_map[state][transition]
         else:
             for symbol in input_str:
-                if state not in self.map:
+                if state not in self.transition_map:
                     return False
                 
                 transition = self.alphabet[symbol]
 
                 # Missing transition = transition to dead state
-                if transition not in self.map[state]:
+                if transition not in self.transition_map[state]:
                     return False
 
-                state = self.map[state][transition]
+                state = self.transition_map[state][transition]
         return state in self.finals
 
     def __contains__(self, string) -> bool:
@@ -280,7 +280,7 @@ class FSM:
         string += ", states = " + repr(self.states)
         string += ", initial = " + repr(self.initial)
         string += ", finals = " + repr(self.finals)
-        string += ", map = " + repr(self.map)
+        string += ", map = " + repr(self.transition_map)
         string += ")"
         return string
 
@@ -306,8 +306,8 @@ class FSM:
             else:
                 row.append("False")
             for symbol, transition in sorted(self.alphabet.items()):
-                if state in self.map and transition in self.map[state]:
-                    row.append(str(self.map[state][transition]))
+                if state in self.transition_map and transition in self.transition_map[state]:
+                    row.append(str(self.transition_map[state][transition]))
                 else:
                     row.append("")
             rows.append(row)
@@ -373,8 +373,8 @@ class FSM:
             for (i, substate) in current:
                 fsm = fsms[i]
                 current_vertex: TransitionKey = new_to_old[i][new_transition]
-                if substate in fsm.map and current_vertex in fsm.map[substate]:
-                    next_states.append(connect_all(i, fsm.map[substate][current_vertex]))
+                if substate in fsm.transition_map and current_vertex in fsm.transition_map[substate]:
+                    next_states.append(connect_all(i, fsm.transition_map[substate][current_vertex]))
             if not next_states:
                 raise OblivionError
             return frozenset(chain.from_iterable(next_states))
@@ -404,15 +404,15 @@ class FSM:
         def follow(state, transition):
             next_states = []
             for substate in state:
-                if substate in self.map and transition in self.map[substate]:
-                    next_states.append(self.map[substate][transition])
+                if substate in self.transition_map and transition in self.transition_map[substate]:
+                    next_states.append(self.transition_map[substate][transition])
 
                 # If one of our substates is final, then we can also consider
                 # transitions from the initial state of the original FSM.
                 if substate in self.finals \
-                        and self.initial in self.map \
-                        and transition in self.map[self.initial]:
-                    next_states.append(self.map[self.initial][transition])
+                        and self.initial in self.transition_map \
+                        and transition in self.transition_map[self.initial]:
+                    next_states.append(self.transition_map[self.initial][transition])
 
             if not next_states:
                 raise OblivionError
@@ -450,9 +450,9 @@ class FSM:
             next_state = []
             for (substate, iteration) in current:
                 if iteration < multiplier \
-                        and substate in self.map \
-                        and transition in self.map[substate]:
-                    current_state = self.map[substate][transition]
+                        and substate in self.transition_map \
+                        and transition in self.transition_map[substate]:
+                    current_state = self.transition_map[substate][transition]
                     next_state.append((current_state, iteration))
                     # final of self? merge with initial on next iteration
                     if current_state in self.finals:
@@ -534,8 +534,8 @@ class FSM:
 
         def follow(current, transition):
             next = {}
-            if 0 in current and current[0] in self.map and transition in self.map[current[0]]:
-                next[0] = self.map[current[0]][transition]
+            if 0 in current and current[0] in self.transition_map and transition in self.transition_map[current[0]]:
+                next[0] = self.transition_map[current[0]][transition]
             return next
 
         # state is final unless the original was
@@ -552,12 +552,12 @@ class FSM:
         # obtained by following this transition in the new FSM
         def follow(current, transition):
             ss, os = current
-            if ss in self.map and new_to_old[0][transition] in self.map[ss]:
-                sn = self.map[ss][new_to_old[0][transition]]
+            if ss in self.transition_map and new_to_old[0][transition] in self.transition_map[ss]:
+                sn = self.transition_map[ss][new_to_old[0][transition]]
             else:
                 sn = None
-            if os in other.map and new_to_old[1][transition] in other.map[os]:
-                on = other.map[os][new_to_old[1][transition]]
+            if os in other.transition_map and new_to_old[1][transition] in other.transition_map[os]:
+                on = other.transition_map[os][new_to_old[1][transition]]
             else:
                 on = None
             if not sn or not on:
@@ -590,7 +590,7 @@ class FSM:
 
         # Speed up follow by pre-computing reverse-transition map
         reverse_map = defaultdict(set)
-        for state, transition_map in self.map.items():
+        for state, transition_map in self.transition_map.items():
             for transition, next_state in transition_map.items():
                 reverse_map[(next_state, transition)].add(state)
 
@@ -634,9 +634,9 @@ class FSM:
             current = reachable[i]
             if current in self.finals:
                 return True
-            if current in self.map:
-                for transition in self.map[current]:
-                    next = self.map[current][transition]
+            if current in self.transition_map:
+                for transition in self.transition_map[current]:
+                    next = self.transition_map[current][transition]
                     if next not in seen:
                         reachable.append(next)
                         seen.add(next)
@@ -695,9 +695,9 @@ class FSM:
         while strings:
             (cstring, cstate) = strings.popleft()
             i += 1
-            if cstate in self.map:
-                for transition in sorted(self.map[cstate]):
-                    nstate = self.map[cstate][transition]
+            if cstate in self.transition_map:
+                for transition in sorted(self.transition_map[cstate]):
+                    nstate = self.transition_map[cstate][transition]
                     if nstate in livestates:
                         for symbol in sorted(self.alphabet.by_transition[transition]):
                             nstring = cstring + [symbol]
@@ -772,9 +772,9 @@ class FSM:
                 n = 0
                 if state in self.finals:
                     n += 1
-                if state in self.map:
-                    for transition in self.map[state]:
-                        n += get_num_strings(self.map[state][transition]) * len(self.alphabet.by_transition[transition])
+                if state in self.transition_map:
+                    for transition in self.transition_map[state]:
+                        n += get_num_strings(self.transition_map[state][transition]) * len(self.alphabet.by_transition[transition])
                 num_strings[state] = n
 
             else:
@@ -858,7 +858,7 @@ class FSM:
             states=self.states.copy(),
             initial=self.initial,
             finals=self.finals.copy(),
-            map=self.map.copy(),
+            transition_map=self.transition_map.copy(),
             __no_validation__=True,
         )
 
@@ -880,10 +880,10 @@ class FSM:
                     symbol = anything_else
 
                 # Missing transition = transition to dead state
-                if not (state in self.map and self.alphabet[symbol] in self.map[state]):
+                if not (state in self.transition_map and self.alphabet[symbol] in self.transition_map[state]):
                     raise OblivionError
 
-                state = self.map[state][self.alphabet[symbol]]
+                state = self.transition_map[state][self.alphabet[symbol]]
 
             # OK so now we have consumed that string, use the new location as the
             # starting point.
@@ -892,7 +892,7 @@ class FSM:
                 states=self.states,
                 initial=state,
                 finals=self.finals,
-                map=self.map,
+                transition_map=self.transition_map,
                 __no_validation__=True,
             )
 
@@ -912,7 +912,7 @@ def null(alphabet):
         states={0},
         initial=0,
         finals=set(),
-        map={
+        transition_map={
             0: dict([(transition, 0) for transition in alphabet.by_transition]),
         },
         __no_validation__=True,
@@ -929,7 +929,7 @@ def epsilon(alphabet):
         states={0},
         initial=0,
         finals={0},
-        map={},
+        transition_map={},
         __no_validation__=True,
     )
 
@@ -957,8 +957,8 @@ def parallel(fsms, test):
             old_transition = new_to_old[i][new_transition]
             
             current_i = current[i]
-            if current_i in f.map and old_transition in f.map[current_i]:
-                next_state[i] = f.map[current_i][old_transition]
+            if current_i in f.transition_map and old_transition in f.transition_map[current_i]:
+                next_state[i] = f.transition_map[current_i][old_transition]
                 
         if not next_state:
             raise OblivionError
@@ -1054,6 +1054,6 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
         states=range(len(states)),
         initial=0,
         finals=finals,
-        map=transition_map,
+        transition_map=transition_map,
         __no_validation__=True,
     )
