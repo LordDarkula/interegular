@@ -24,19 +24,19 @@ class _AnythingElseCls:
         fsm.anything_else, then follow the appropriate transition.
     """
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "anything_else"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "anything_else"
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return False
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self is other
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(id(self))
 
 
@@ -45,7 +45,7 @@ class _AnythingElseCls:
 anything_else = _AnythingElseCls()
 
 
-def nice_char_group(chars: Iterable[Union[str, _AnythingElseCls]]):
+def nice_char_group(chars: Iterable[Union[str, _AnythingElseCls]]) -> str:
     out = []
     current_range = []
     for c in sorted(chars):
@@ -73,7 +73,7 @@ class Alphabet(Mapping[Any, TransitionKey]):
     def by_transition(self) -> Dict[TransitionKey, List[Union[str, _AnythingElseCls]]]:
         return self._by_transition
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = []
         width = 0
         for tk, symbols in sorted(self._by_transition.items()):
@@ -82,7 +82,7 @@ class Alphabet(Mapping[Any, TransitionKey]):
                 width = len(out[-1][0])
         return '\n'.join(f"{a:{width}} | {b}" for a, b in out)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}({self._symbol_mapping!r})"
 
     def __len__(self) -> int:
@@ -107,7 +107,7 @@ class Alphabet(Mapping[Any, TransitionKey]):
         else:
             return self._symbol_mapping[item]
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self._symbol_mapping
 
     def union(*alphabets: 'Alphabet') -> 'Tuple[Alphabet, Tuple[Dict[TransitionKey, TransitionKey], ...]]':
@@ -218,7 +218,7 @@ class FSM:
         self.__dict__["finals"] = frozenset(finals)
         self.__dict__["map"] = map
 
-    def accepts(self, input_str: str):
+    def accepts(self, input_str: str) -> bool:
         """
             Test whether the present FSM accepts the supplied string (iterable of
             symbols). Equivalently, consider `self` as a possibly-infinite set of
@@ -258,7 +258,7 @@ class FSM:
                 state = self.map[state][transition]
         return state in self.finals
 
-    def __contains__(self, string):
+    def __contains__(self, string) -> bool:
         """
             This lets you use the syntax `"a" in fsm1` to see whether the string "a"
             is in the set of strings accepted by `fsm1`.
@@ -273,7 +273,7 @@ class FSM:
         """
         return self.reversed().reversed()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         string = "fsm("
         string += "alphabet = " + repr(self.alphabet)
         string += ", states = " + repr(self.states)
@@ -283,7 +283,7 @@ class FSM:
         string += ")"
         return string
 
-    def __str__(self):
+    def __str__(self) -> str:
         rows = []
 
         # top row
