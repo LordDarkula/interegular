@@ -945,21 +945,28 @@ def parallel(fsms, test):
 
     # dedicated function accepts a "superset" and returns the next "superset"
     # obtained by following this transition in the new FSM
-    def follow(current, new_transition, fsm_range=tuple(enumerate(fsms))):
-        next = {}
+    def follow(current, new_transition, fsm_range=None):
+        fsm_range = fsm_range or enumerate(fsms)
+        next_state = {}
+        
         for i, f in fsm_range:
+            if i not in current:
+                continue
+            
             old_transition = new_to_old[i][new_transition]
-            if i in current \
-                    and current[i] in f.map \
-                    and old_transition in f.map[current[i]]:
-                next[i] = f.map[current[i]][old_transition]
-        if not next:
+            
+            current_i = current[i]
+            if current_i in f.map and old_transition in f.map[current_i]:
+                next_state[i] = f.map[current_i][old_transition]
+                
+        if not next_state:
             raise OblivionError
-        return next
+        return next_state
 
     # Determine the "is final?" condition of each substate, then pass it to the
     # test to determine finality of the overall FSM.
-    def final(state, fsm_range=tuple(enumerate(fsms))):
+    def final(state, fsm_range=None):
+        fsm_range = fsm_range or enumerate(fsms)
         accepts = [i in state and state[i] in fsm.finals for (i, fsm) in fsm_range]
         return test(accepts)
 
