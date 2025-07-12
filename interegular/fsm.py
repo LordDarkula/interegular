@@ -208,12 +208,12 @@ class FSM:
                 raise Exception("Initial state " + repr(self.initial) + " must be one of " + repr(self.states))
             if not self.finals.issubset(self.states):
                 raise Exception("Final states " + repr(self.finals) + " must be a subset of " + repr(self.states))
-            for state in self.transition_map.keys():
-                for symbol in self.transition_map[state]:
-                    if not self.transition_map[state][symbol] in self.states:
+            for state, transitions in self.transition_map.items():
+                for next_state in transitions.values:
+                    if not next_state in self.states:
                         raise Exception(
                             "Transition for state " + repr(state) + " and symbol " + repr(symbol) + " leads to " + repr(
-                                self.transition_map[state][symbol]) + ", which is not a state")
+                                next_state) + ", which is not a state")
         
         object.__setattr__(self, "alphabet", alphabet)
         object.__setattr__(self, "states", states)
@@ -640,11 +640,11 @@ class FSM:
             if current in self.finals:
                 return True
             if current in self.transition_map:
-                for transition in self.transition_map[current]:
-                    next = self.transition_map[current][transition]
-                    if next not in seen:
-                        reachable.append(next)
-                        seen.add(next)
+                transitions = self.transition_map[current]
+                for next_state in transitions.values():
+                    if next_state not in seen:
+                        reachable.append(next_state)
+                        seen.add(next_state)
             i += 1
         return False
 
