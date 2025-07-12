@@ -44,8 +44,9 @@ class _AnythingElseCls:
 # value gets serialised. Otherwise this would just be `object()`.
 anything_else = _AnythingElseCls()
 
+Symbol = Union[str, _AnythingElseCls]
 
-def nice_char_group(chars: Iterable[Union[str, _AnythingElseCls]]) -> str:
+def nice_char_group(chars: Iterable[Symbol]) -> str:
     out = []
     current_range = []
     for c in sorted(chars):
@@ -70,7 +71,7 @@ TransitionKey = NewType("TransitionKey", int)
 
 class Alphabet(Mapping[Any, TransitionKey]):
     @property
-    def by_transition(self) -> Dict[TransitionKey, List[Union[str, _AnythingElseCls]]]:
+    def by_transition(self) -> Dict[TransitionKey, List[Symbol]]:
         return self._by_transition
 
     def __str__(self) -> str:
@@ -91,12 +92,12 @@ class Alphabet(Mapping[Any, TransitionKey]):
     def __iter__(self):
         return iter(self._symbol_mapping)
 
-    def __init__(self, symbol_mapping: Dict[Union[str, _AnythingElseCls], TransitionKey]):
+    def __init__(self, symbol_mapping: Dict[Symbol, TransitionKey]):
         self._symbol_mapping = symbol_mapping
         by_transition = defaultdict(list)
         for s, t in self._symbol_mapping.items():
             by_transition[t].append(s)
-        self._by_transition: Dict[TransitionKey, List[Union[str, _AnythingElseCls]]] = dict(by_transition)
+        self._by_transition: Dict[TransitionKey, List[Symbol]] = dict(by_transition)
 
     def __getitem__(self, item):
         if item not in self._symbol_mapping:
