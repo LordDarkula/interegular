@@ -159,9 +159,9 @@ class _CharGroup(_Repeatable):
 
         return FSM(
             alphabet=alphabet,
-            states={0, 1},
+            states=frozenset({0, 1}),
             initial=0,
-            finals={1},
+            finals=frozenset({1}),
             transition_map=mapping,
         )
 
@@ -190,9 +190,9 @@ class __DotCls(_Repeatable):
             symbols = alphabet
         return FSM(
             alphabet=alphabet,
-            states={0, 1},
+            states=frozenset({0, 1}),
             initial=0,
-            finals={1},
+            finals=frozenset({1}),
             transition_map={0: {alphabet[sym]: 1 for sym in symbols}},
         )
 

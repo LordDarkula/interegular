@@ -2,9 +2,10 @@
     Finite state machine library, extracted from `greenery.fsm` and adapted by MegaIng
 """
 from _collections import deque
+from dataclasses import dataclass
 from collections import defaultdict
 from functools import total_ordering
-from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable, List
+from typing import Any, Set, Dict, Union, NewType, Mapping, Tuple, Iterable, Callable, List, Optional
 from itertools import chain
 
 from interegular.utils import soft_repr
@@ -163,6 +164,7 @@ class OblivionError(Exception):
     pass
 
 
+@dataclass(frozen=True)
 class FSM:
     """
         A Finite State Machine or FSM has an alphabet and a set of states. At any
@@ -178,16 +180,17 @@ class FSM:
         The majority of these methods are available using operator overloads.
     """
     alphabet: Alphabet
+    states: frozenset[State]
     initial: State
-    states: Set[State]
-    finals: Set[State]
+    finals: frozenset[State]
     transition_map: Dict[State, Dict[TransitionKey, State]]
+    __no_validation__: Optional[bool] = True
+    
+    @property
+    def map(self) -> Dict[State, Dict[TransitionKey, State]]:
+        return self.transition_map
 
-    def __setattr__(self, name, value):
-        """Immutability prevents some potential problems."""
-        raise Exception("This object is immutable.")
-
-    def __init__(self, alphabet: Alphabet, states, initial, finals, transition_map, *, __no_validation__=False):
+    def __init__(self, alphabet: Alphabet, states: frozenset[State], initial: State, finals: frozenset[State], transition_map: Optional[Dict[State, Dict[TransitionKey, State]]]=None, __no_validation__: Optional[bool] = True, map: Optional[Dict[State, Dict[TransitionKey, State]]]=None):
         """
             `alphabet` is an iterable of symbols the FSM can be fed.
             `states` is the set of states for the FSM
@@ -196,28 +199,30 @@ class FSM:
             `map` may be sparse (i.e. it may omit transitions). In the case of omitted
             transitions, a non-final "oblivion" state is simulated.
         """
-
-        if not __no_validation__:
+        assert map is not None or transition_map is not None
+        if not self.__no_validation__:
             # Validation. Thanks to immutability, this only needs to be carried out once.
-            if not isinstance(alphabet, Alphabet):
+            if not isinstance(self.alphabet, Alphabet):
                 raise TypeError("Expected an Alphabet instance")
-            if not initial in states:
-                raise Exception("Initial state " + repr(initial) + " must be one of " + repr(states))
-            if not finals.issubset(states):
-                raise Exception("Final states " + repr(finals) + " must be a subset of " + repr(states))
-            for state in transition_map.keys():
-                for symbol in transition_map[state]:
-                    if not transition_map[state][symbol] in states:
+            if not self.initial in self.states:
+                raise Exception("Initial state " + repr(self.initial) + " must be one of " + repr(self.states))
+            if not self.finals.issubset(self.states):
+                raise Exception("Final states " + repr(self.finals) + " must be a subset of " + repr(self.states))
+            for state in self.transition_map.keys():
+                for symbol in self.transition_map[state]:
+                    if not self.transition_map[state][symbol] in self.states:
                         raise Exception(
                             "Transition for state " + repr(state) + " and symbol " + repr(symbol) + " leads to " + repr(
-                                transition_map[state][symbol]) + ", which is not a state")
-
-        # Initialise the hard way due to immutability.
-        self.__dict__["alphabet"] = alphabet
-        self.__dict__["states"] = frozenset(states)
-        self.__dict__["initial"] = initial
-        self.__dict__["finals"] = frozenset(finals)
-        self.__dict__["transition_map"] = transition_map
+                                self.transition_map[state][symbol]) + ", which is not a state")
+        
+        object.__setattr__(self, "alphabet", alphabet)
+        object.__setattr__(self, "states", states)
+        object.__setattr__(self, "initial", initial)
+        object.__setattr__(self, "finals", finals)
+        if transition_map is not None:
+            object.__setattr__(self, "transition_map", transition_map)
+        else:
+            object.__setattr__(self, "transition_map", map)
 
     def accepts(self, input_str: str) -> bool:
         """
@@ -909,9 +914,9 @@ def null(alphabet):
     """
     return FSM(
         alphabet=alphabet,
-        states={0},
+        states=frozenset({0}),
         initial=0,
-        finals=set(),
+        finals=frozenset(),
         transition_map={
             0: dict([(transition, 0) for transition in alphabet.by_transition]),
         },
@@ -926,9 +931,9 @@ def epsilon(alphabet):
     """
     return FSM(
         alphabet=alphabet,
-        states={0},
+        states=frozenset({0}),
         initial=0,
-        finals={0},
+        finals=frozenset({0}),
         transition_map={},
         __no_validation__=True,
     )
@@ -1051,9 +1056,9 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
 
     return FSM(
         alphabet=alphabet,
-        states=range(len(states)),
+        states=frozenset(range(len(states))),
         initial=0,
-        finals=finals,
+        finals=frozenset(finals),
         transition_map=transition_map,
         __no_validation__=True,
     )
