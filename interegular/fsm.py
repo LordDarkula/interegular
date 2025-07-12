@@ -766,25 +766,24 @@ class FSM:
 
         def get_num_strings(state):
             # Many FSMs have at least one oblivion state
-            if self.islive(state):
-                if state in num_strings:
-                    if num_strings[state] is None:  # "computing..."
-                        # Recursion! There are infinitely many strings recognised
-                        raise OverflowError(state)
-                    return num_strings[state]
-                num_strings[state] = None  # i.e. "computing..."
+            if not self.islive(state):
+                return 0
+            
+            if state in num_strings:
+                if num_strings[state] is None:  # "computing..."
+                    # Recursion! There are infinitely many strings recognised
+                    raise OverflowError(state)
+                return num_strings[state]
+            num_strings[state] = None  # i.e. "computing..."
 
-                n = 0
-                if state in self.finals:
-                    n += 1
-                if state in self.transition_map:
-                    for transition in self.transition_map[state]:
-                        n += get_num_strings(self.transition_map[state][transition]) * len(self.alphabet.by_transition[transition])
-                num_strings[state] = n
-
-            else:
-                # Dead state
-                num_strings[state] = 0
+            n = 0
+            if state in self.finals:
+                n += 1
+            if state in self.transition_map:
+                transitions = self.transition_map[state]
+                for transition, next_state in transitions.items():
+                    n += get_num_strings(next_state) * len(self.alphabet.by_transition[transition])
+            num_strings[state] = n
 
             return num_strings[state]
 
@@ -1021,7 +1020,7 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
 
     states = [initial]
     state_idx: Dict[int, int] = {get_hash(initial): 0}
-    finals = set()
+    finals = []
     transition_map = {}
 
     # iterate over a growing list
@@ -1031,7 +1030,7 @@ def crawl(alphabet: Alphabet, initial: Any, final: Callable[[Any], bool], follow
 
         # add to finals
         if final(state):
-            finals.add(i)
+            finals.append(i)
 
         # compute map for this state
         transition_map[i] = {}
