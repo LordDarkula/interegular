@@ -200,17 +200,17 @@ class FSM:
             transitions, a non-final "oblivion" state is simulated.
         """
         assert map is not None or transition_map is not None
-        if not self.__no_validation__:
+        if not __no_validation__:
             # Validation. Thanks to immutability, this only needs to be carried out once.
-            if not isinstance(self.alphabet, Alphabet):
+            if not isinstance(alphabet, Alphabet):
                 raise TypeError("Expected an Alphabet instance")
-            if not self.initial in self.states:
-                raise Exception("Initial state " + repr(self.initial) + " must be one of " + repr(self.states))
-            if not self.finals.issubset(self.states):
-                raise Exception("Final states " + repr(self.finals) + " must be a subset of " + repr(self.states))
-            for state, transitions in self.transition_map.items():
-                for next_state in transitions.values:
-                    if not next_state in self.states:
+            if not initial in states:
+                raise Exception("Initial state " + repr(initial) + " must be one of " + repr(states))
+            if not finals.issubset(states):
+                raise Exception("Final states " + repr(finals) + " must be a subset of " + repr(states))
+            for state, transitions in transition_map.items():
+                for symbol, next_state in transitions.items():
+                    if not next_state in states:
                         raise Exception(
                             "Transition for state " + repr(state) + " and symbol " + repr(symbol) + " leads to " + repr(
                                 next_state) + ", which is not a state")
