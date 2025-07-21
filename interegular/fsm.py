@@ -767,6 +767,7 @@ class FSM:
         def get_num_strings(state):
             # Many FSMs have at least one oblivion state
             if not self.islive(state):
+                num_strings[state] = 0
                 return 0
             
             if state in num_strings:
