@@ -35,10 +35,10 @@ class _AnythingElseCls:
         return False
 
     def __eq__(self, other) -> bool:
-        return self is other
+        return isinstance(other, _AnythingElseCls)
 
     def __hash__(self) -> int:
-        return hash(id(self))
+        return hash(str(self))
 
 
 # We use a class instance because that gives us control over how the special
